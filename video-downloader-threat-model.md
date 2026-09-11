@@ -142,8 +142,8 @@ There is no HSTS, CSP, `X-Content-Type-Options`, or `Referrer-Policy`. The front
 
 Passing a list to `subprocess` stops shell injection but not the called program's own option parsing. The `--` separator and input validation are separate controls, and both are necessary.
 
-The most dangerous findings change severity based on where they are deployed. An SSRF that has low impact on a local laptop becomes a pivotal entry point to the private network once it is inside a cluster. Threat models must be run against the actual target environment, not just the raw code.
+The most dangerous findings change severity based on where they are deployed. An SSRF that's harmless on a laptop becomes a real problem inside a cluster, where it can reach internal services that shouldn't be reachable from the internet.
 
-Some vulnerabilities aren't tied to a single line of code. They happen because application the state lives in one replica (my computer) These issues only become visible when you look at how multiple replicas interact with each other.
+Some vulnerabilities aren't a single bad line of code. They come from where the state lives. In my case it lived in one process's memory, which only becomes a problem once you imagine multiple replicas running at once, each with its own separate copy of that memory.
 
 Auditing my own code forced a different posture than building it. I had to assume every input was hostile, including the ones I wrote the happy path for.
