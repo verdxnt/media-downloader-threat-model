@@ -86,11 +86,11 @@ Nothing verifies that the submitter owns the address they enter. I confirmed thi
 
 ### F-08. No rate limiting or resource ceilings. **Medium**
 
-Every POST unconditionally creates a folder, spawns a thread, and starts a process. There is no cap on concurrent jobs, request rate, download size, or playlist length. **Remediation:** add a global concurrent-job semaphore, per-user rate limiting, `--max-filesize` and `--no-playlist` on the command, and platform resource requests and limits on the pod.
+Every POST unconditionally creates a folder, spawns a thread, and starts a process. There is no cap on concurrent jobs, request rate, download size, or playlist length. **Remediation:** add a global concurrent-job, per-user rate limiting, `--max-filesize` and `--no-playlist` on the command, and platform resource requests and limits on the pod.
 
 ### F-09. In-memory job registry grows unbounded and is not durable. **Medium**
 
-Entries are never removed, so memory grows until restart, and a restart discards all job state while files remain on disk. Under multiple replicas this also breaks correctness: a user may be routed to a pod with no record of their job and receive a 404. **Remediation:** evict old entries in the cleanup sweep. Longer term, move state to shared storage such as Redis or SQLite.
+Entries are never removed, so memory grows until restart, and a restart discards all job state while files remain on disk. Under multiple replicas this also breaks correctness: a user may be routed to a pod with no record of their job and receive a 404. **Remediation:** remove old entries in the cleanup sweep. Longer term, move state to shared storage such as Redis or SQLite.
 
 ### F-10. Retention window mismatch. **Low**
 
@@ -98,7 +98,7 @@ The notification says files are kept 24 hours, but cleanup deletes after one hou
 
 ### F-11. Hardcoded developer path in cleanup. **Low**
 
-An absolute local path will not exist in a container, so cleanup silently does nothing and disk fills. It also leaks the developer's local layout. **Remediation:** read the path from an environment variable with a sensible default, and run cleanup as a scheduled job mounting the same volume.
+An absolute local path will not exist in a container, so cleanup silently does nothing and disk fills. It also leaks the developer's local layout. **Remediation:** read the path from an environment variable with a sensible default, and run cleanup as a scheduled.
 
 ### F-12. No containment check before `send_file`. **Low, defense in depth**
 
@@ -142,8 +142,8 @@ There is no HSTS, CSP, `X-Content-Type-Options`, or `Referrer-Policy`. The front
 
 Passing a list to `subprocess` stops shell injection but not the called program's own option parsing. The `--` separator and input validation are separate controls, and both are necessary.
 
-The most dangerous findings changed severity on deployment. An SSRF that is low-impact on a laptop becomes an internal-network oracle inside a cluster. Threat models have to be run against the target environment, not just the code.
+The most dangerous findings change severity based on where they are deployed. An SSRF that has low impact on a local laptop becomes a pivotal entry point to the private network once it is inside a cluster. Threat models must be run against the actual target environment, not just the raw code.
 
-Several findings were not bugs in a single line but consequences of state living in process memory. Those only surfaced when I reasoned about multiple replicas.
+Some vulnerabilities aren't tied to a single line of code. They happen because application the state lives in one replica (my computer) These issues only become visible when you look at how multiple replicas interact with each other.
 
 Auditing my own code forced a different posture than building it. I had to assume every input was hostile, including the ones I wrote the happy path for.
